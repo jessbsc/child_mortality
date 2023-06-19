@@ -19,14 +19,16 @@ micro_data_csv_clean <- merge(x=micro_data_csv_clean, y=uf_list,
                               by.y=c("name", "sub_code"))
 #CITY_BY_MONTH <- filter(teste, LOCAL_NAME == "Água Branca")
 
-micro_data_csv_clean$region <- ifelse(micro_data_csv_clean$uf %in%  list('RJ',"SP","MG","ES" ), "Sudeste", ifelse(micro_data_csv_clean$uf %in%  list('RS',"SC","PR"),"Sul",ifelse(micro_data_csv_clean$uf %in%  list('MS',"MT","GO"),"CentroOeste", ifelse(micro_data_csv_clean$uf %in%  list('AM',"AC","RR","RO","AP","TO" ),"Norte","Nordeste")))) 
+micro_data_csv_clean$region <- ifelse(micro_data_csv_clean$uf %in%  list('RJ',"SP","MG","ES" ), "Sudeste", ifelse(micro_data_csv_clean$uf %in%  list('RS',"SC","PR"),"Sul",ifelse(micro_data_csv_clean$uf %in%  list('MS',"MT","GO", "DF"),"CentroOeste", ifelse(micro_data_csv_clean$uf %in%  list('AM',"AC","RR","RO","AP","TO", "PA" ),"Norte","Nordeste")))) 
 
 #write.csv(micro_data_csv_clean, "mortality_and_nasc_by_month_v4.csv", row.names=TRUE)
 
 
-mortality_grupo <- filter(micro_data_csv_clean, grupo == 3)
-mortality_grupo <- filter(mortality_grupo, year_month_date >= '1998/01/01')
-mortality_grupo <- filter(mortality_grupo, region == 'Sul')
+mortality_grupo <- filter(micro_data_csv_clean, year_month_date >= '1998/01/01')
+
+mortality_grupo <- filter(mortality_grupo, grupo == 3)
+mortality_grupo <- filter(mortality_grupo, region == 'Nordeste')
+
 
 library(zoo)
 ##### taxa geral por grupo e por regiao
