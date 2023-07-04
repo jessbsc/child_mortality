@@ -24,7 +24,7 @@ micro_data_csv_clean$region <- ifelse(micro_data_csv_clean$uf %in%  list('RJ',"S
 #unique(micro_data_csv_clean$LOCAL_NAME)
 
 
-ano_analise <- '2021'
+ano_analise <- '2020'
 ano_final_media <- '2019'
 
 cidade_estudo_lista <- c('São Paulo', 'Capão do Cipó', 'Campo Mourão', 'Abadia de Goiás','Campos dos Goytacazes', 'Campinas','Rio de Janeiro', 'Afrânio', "Abelardo luz", 'Diamante do Sul' )
@@ -38,10 +38,14 @@ cidade_estudo_lista <- c('São Paulo', 'Capão do Cipó', 'Campo Mourão', 'Abad
 for (cidade_estudo in cidade_estudo_lista) {
   diagrama_controle(ano_analise, ano_final_media, cidade_estudo, micro_data_csv_clean)
 }
+
+for (cidade_estudo in cidade_estudo_lista) {
+  historico_cidades(cidade_estudo ,1998, micro_data_csv_clean)
+}
 ### Para chamar só para um caso 
 diagrama_controle(ano_analise, ano_final_media, 'Aratuba', micro_data_csv_clean)
 
-
+historico_cidades('Aratuba',2000, micro_data_csv_clean)
 
 # Definicao da funcao
 
@@ -52,7 +56,8 @@ diagrama_controle = function (ano_analise, ano_final_media, cidade_estudo,  data
   ano_inicial_media <-  as.numeric(ano_final_media) - 10
   data$month <- format(as.Date(data$year_month_date, format="%d/%m/%Y"),"%m")
   data$year <- format(as.Date(data$year_month_date, format="%d/%m/%Y"),"%Y")
-  data$death_per_1000<- data$all_death/1000 
+  data$death_per_1000<- data$all_death/data$FL_BIRTH*1000
+  
   
   mortality_grupo <- filter(data, year >= ano_inicial_media )
   mortality_grupo <- filter(mortality_grupo, year <= ano_final_media )
@@ -92,18 +97,53 @@ diagrama_controle = function (ano_analise, ano_final_media, cidade_estudo,  data
 
 }
 
+historico_cidades = function (cidade_estudo, ano_inicio,   data ) {
+  data$year <- format(as.Date(data$year_month_date, format="%d/%m/%Y"),"%Y")
+  cidade_analise <- filter(data, LOCAL_NAME == cidade_estudo)
+  cidade_analise <- filter(cidade_analise, year >= ano_inicio )
+  
+  cidade_analise_group <- cidade_analise %>% group_by(year) %>% summarise(
+    year = max(year),
+    soma_mortes = sum(all_death), 
+    soma_nasc = sum(FL_BIRTH)
+  )
+  cidade_analise_group$relacao <- cidade_analise_group$soma_mortes / cidade_analise_group$soma_nasc
+  
+  library(ggplot2)
+  
+  p <- (ggplot(cidade_analise_group, aes(x=year, group = 1) ) + 
+          geom_line(aes(y = relacao), color = "darkred") 
+        # + geom_line(aes(y = lim_inferior), color = "darkred", linetype = "dashed") 
+        #  + geom_line(aes(y = death_per_1000), color = "black") 
+        +  ggtitle( paste("Relação Histórica - ", " Cidade:", cidade_estudo  ))
+        +    labs(x = "Anos",
+                  y = "Incidência de mortalidade por nascidos vivos por 1000 habitantes")+ theme_bw()
+  )
+  print(p)
+  
+  
+  
+}
+
+
 ## escolha das cidade 
 
 micro_data_csv_clean$year <- format(as.Date(micro_data_csv_clean$year_month_date, format="%d/%m/%Y"),"%Y")
 
-cidade_analise <- filter(micro_data_csv_clean, LOCAL_NAME == 'Trombras' )
+cidade_analise <- filter(micro_data_csv_clean, LOCAL_NAME == ''Gonçalvel Dias'' )
+cidade_analise <- filter(micro_data_csv_clean, year == 2020 )
+
 
 cidade_analise_group <- cidade_analise %>% group_by(LOCAL_CODE) %>% summarise(
   LOCAL_CODE = max(LOCAL_CODE),
   LOCAL_NAME = max(LOCAL_NAME),
   grupo = max(grupo),
-  soma_mortes = sum(all_death)
+  soma_mortes = sum(all_death), 
+  soma_nasc = sum(FL_BIRTH)
+  
   )
+
+cidade_analise_group$relacao <- cidade_analise_group$soma_mortes / cidade_analise_group$soma_nasc
 
 cidade_analise_group_filter <- filter(cidade_analise_group, soma_mortes == 0 )
 
@@ -111,3 +151,22 @@ cidade_analise_group_filter <- filter(cidade_analise_group, soma_mortes == 0 )
 
 
 
+
+
+
+cidade_analise_group$relacao <- cidade_analise_group$soma_mortes / cidade_analise_group$soma_nasc
+
+
+library(ggplot2)
+
+p <- (ggplot(cidade_analise_group, aes(x=year, group = 1) ) + 
+        geom_line(aes(y = relacao), color = "darkred") 
+     # + geom_line(aes(y = lim_inferior), color = "darkred", linetype = "dashed") 
+     #  + geom_line(aes(y = death_per_1000), color = "black") 
+      +  ggtitle( paste("Diagrama de Controle - Ano de estudo:", ano_analise, " Range:", ano_final_media,"-", ano_inicial_media, " Cidade:", cidade_estudo  ))
+      +    labs(x = "Meses",
+                y = "Incidência de mortalidade por 1000 habitantes")+ theme_bw()
+)
+print(p)
+
+dev.off()
