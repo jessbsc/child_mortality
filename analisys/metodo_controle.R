@@ -35,15 +35,28 @@ cidade_estudo_lista <- c('São Paulo', 'Capão do Cipó', 'Campo Mourão', 'Abad
 
 #cidade_estudo_lista <- unique(micro_data_csv_clean$LOCAL_NAME) 
 
-for (cidade_estudo in cidade_estudo_lista) {
-  diagrama_controle(ano_analise, ano_final_media, cidade_estudo, micro_data_csv_clean)
-}
+#for (cidade_estudo in cidade_estudo_lista) {
+#  diagrama_controle(ano_analise, ano_final_media, cidade_estudo, micro_data_csv_clean)
+#}
 
-for (cidade_estudo in cidade_estudo_lista) {
-  historico_cidades(cidade_estudo ,1998, micro_data_csv_clean)
-}
+#for (cidade_estudo in cidade_estudo_lista) {
+#  historico_cidades(cidade_estudo ,1998, micro_data_csv_clean)
+#}
 ### Para chamar só para um caso 
-diagrama_controle(ano_analise, ano_final_media, 'Aratuba', micro_data_csv_clean)
+
+library(patchwork)
+
+
+p1 <- diagrama_controle(ano_analise, ano_final_media, 'Rio de Janeiro', micro_data_csv_clean)
+p2 <- diagrama_controle(ano_analise, ano_final_media, 'Campo Mourão', micro_data_csv_clean)
+p3 <- diagrama_controle(ano_analise, ano_final_media, 'Diamante do Sul', micro_data_csv_clean)
+p4 <- diagrama_controle(ano_analise, ano_final_media, 'Gonçalves Dias', micro_data_csv_clean)
+
+p34 <- p1 + p2 + p3 + p4 + plot_annotation(
+  title = "Control Diagram - Year of study: 2020",
+  caption = "Source: To Define"
+)
+p34
 
 historico_cidades('Aratuba',2000, micro_data_csv_clean)
 
@@ -89,9 +102,9 @@ diagrama_controle = function (ano_analise, ano_final_media, cidade_estudo,  data
          + geom_line(aes(y = lim_superior), color = "darkred" , linetype = "dashed") 
          + geom_line(aes(y = lim_inferior), color = "darkred", linetype = "dashed") 
          + geom_line(aes(y = death_per_1000), color = "black") 
-         +  ggtitle( paste("Diagrama de Controle - Ano de estudo:", ano_analise, " Range:", ano_final_media,"-", ano_inicial_media, " Cidade:", cidade_estudo  ))
-         +    labs(x = "Meses",
-                   y = "Incidência de mortalidade por 1000 habitantes")+ theme_bw()
+         +  ggtitle( paste("City: ", cidade_estudo  ))
+         +    labs(x = "Month",
+                   y = "Mortality Rate")+ theme_bw()
    )
    print(p)
 
@@ -130,7 +143,7 @@ historico_cidades = function (cidade_estudo, ano_inicio,   data ) {
 
 micro_data_csv_clean$year <- format(as.Date(micro_data_csv_clean$year_month_date, format="%d/%m/%Y"),"%Y")
 
-cidade_analise <- filter(micro_data_csv_clean, LOCAL_NAME == ''Gonçalvel Dias'' )
+cidade_analise <- filter(micro_data_csv_clean, LOCAL_NAME == 'Gonçalvel Dias' )
 cidade_analise <- filter(micro_data_csv_clean, year == 2020 )
 
 

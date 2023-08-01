@@ -37,9 +37,9 @@ diagrama_controle = function (ano_analise, ano_final_media, cidade_estudo,  data
         + geom_line(aes(y = lim_superior), color = "darkred" , linetype = "dashed") 
         + geom_line(aes(y = lim_inferior), color = "darkred", linetype = "dashed") 
         + geom_line(aes(y = death_per_1000), color = "black") 
-        +  ggtitle( paste("Diagrama de Controle - Ano de estudo:", ano_analise, " Range:", ano_final_media,"-", ano_inicial_media, " Cidade:", cidade_estudo ))
-        +    labs(x = "Meses",
-                  y = "Incidência de mortalidade por 1000 habitantes")+ theme_bw()
+        +  ggtitle( paste("City: ", cidade_estudo ))
+        +    labs(x = "Month",
+                  y = "Mortality Rate")+ theme_bw()
   )
   print(p)
   #}
