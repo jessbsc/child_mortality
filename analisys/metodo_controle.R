@@ -45,20 +45,19 @@ cidade_estudo_lista <- c('São Paulo', 'Capão do Cipó', 'Campo Mourão', 'Abad
 ### Para chamar só para um caso 
 
 library(patchwork)
-
+library(ggplot2)
+library(gridExtra)
 
 p1 <- diagrama_controle(ano_analise, ano_final_media, 'Rio de Janeiro', micro_data_csv_clean)
 p2 <- diagrama_controle(ano_analise, ano_final_media, 'Campo Mourão', micro_data_csv_clean)
 p3 <- diagrama_controle(ano_analise, ano_final_media, 'Diamante do Sul', micro_data_csv_clean)
 p4 <- diagrama_controle(ano_analise, ano_final_media, 'Gonçalves Dias', micro_data_csv_clean)
 
-p34 <- p1 + p2 + p3 + p4 + plot_annotation(
-  title = "Control Diagram - Year of study: 2020",
-  caption = "Source: To Define"
-)
-p34
+p34 <-p1 + p2 + p3 + p4  + plot_layout(guides = "collect")
 
-historico_cidades('Aratuba',2000, micro_data_csv_clean)
+p34 
+
+historico_cidades('Aratuba', 2000, micro_data_csv_clean)
 
 # Definicao da funcao
 
@@ -95,18 +94,33 @@ diagrama_controle = function (ano_analise, ano_final_media, cidade_estudo,  data
   
   #mortality_grupo_year_merge$comparacao <-  mortality_grupo_year_merge$death_per_1000*1.1 > mortality_grupo_year_merge$lim_superior
 
+  estado <- unique(mortality_grupo_year$uf)
+  
   library(ggplot2)
 
-   p <- (ggplot(mortality_grupo_year_merge, aes(x=month, group = 1) ) + 
-           geom_line(aes(y = avg_month), color = "darkred") 
-         + geom_line(aes(y = lim_superior), color = "darkred" , linetype = "dashed") 
-         + geom_line(aes(y = lim_inferior), color = "darkred", linetype = "dashed") 
-         + geom_line(aes(y = death_per_1000), color = "black") 
-         +  ggtitle( paste("City: ", cidade_estudo  ))
-         +    labs(x = "Month",
-                   y = "Mortality Rate")+ theme_bw()
-   )
-   print(p)
+  p <- ggplot(mortality_grupo_year_merge, aes(x = month, group = 1)) + 
+    geom_line(aes(y = avg_month, color = "Average", linetype = "Average")) +
+    geom_line(aes(y = lim_superior, color = "Upper Limit", linetype = "Upper Limit")) +
+    geom_line(aes(y = lim_inferior, color = "Lower Limit", linetype = "Lower Limit")) +
+    geom_line(aes(y = death_per_1000, color = "Study Year", linetype = "Study Year")) +
+    ggtitle(paste("Locality: ", cidade_estudo, "-", estado)) +
+    theme_bw()+
+    labs(x = "Month", y = "Infant Mortality Rate", color = "Legend Title") +
+    scale_color_manual(
+      values = c("Average" = "darkred", "Upper Limit" = "darkred", "Lower Limit" = "darkred", "Study Year" = "black"),
+      name = "Legend Title"
+    ) +
+    scale_linetype_manual(
+      values = c("Average" = "solid", "Upper Limit" = "dashed", "Lower Limit" = "dashed", "Study Year" = "solid"),
+      name = "Legend Title"
+    ) 
+     
+  
+  # Exibir o gráfico
+  print(p)
+
+   
+
 
 }
 
