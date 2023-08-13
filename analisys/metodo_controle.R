@@ -48,21 +48,26 @@ library(patchwork)
 library(ggplot2)
 library(gridExtra)
 
-p1 <- diagrama_controle(ano_analise, ano_final_media, 'Rio de Janeiro', micro_data_csv_clean)
-p2 <- diagrama_controle(ano_analise, ano_final_media, 'Campo Mourão', micro_data_csv_clean)
-p3 <- diagrama_controle(ano_analise, ano_final_media, 'Diamante do Sul', micro_data_csv_clean)
-p4 <- diagrama_controle(ano_analise, ano_final_media, 'Gonçalves Dias', micro_data_csv_clean)
 
-p34 <-p1 + p2 + p3 + p4  + plot_layout(guides = "collect")
+install.packages("cowplot")
+library(cowplot)
+p1 <- diagrama_controle(ano_analise, ano_final_media, 'Rio de Janeiro', micro_data_csv_clean, "A")
+p2 <- diagrama_controle(ano_analise, ano_final_media, 'Campo Mourão', micro_data_csv_clean, "B")
+p3 <- diagrama_controle(ano_analise, ano_final_media, 'Diamante do Sul', micro_data_csv_clean, "C")
+p4 <- diagrama_controle(ano_analise, ano_final_media, 'Gonçalves Dias', micro_data_csv_clean, "D")
 
-p34 
+
+subplot <- p1 + p2 + p3 + p4 +
+  plot_layout(guides = 'collect') & theme(legend.position = 'bottom')
+
+print(subplot)
 
 historico_cidades('Aratuba', 2000, micro_data_csv_clean)
 
 # Definicao da funcao
 
 
-diagrama_controle = function (ano_analise, ano_final_media, cidade_estudo,  data ) {
+diagrama_controle = function (ano_analise, ano_final_media, cidade_estudo,  data , letra) {
   
   aux = 0 
   ano_inicial_media <-  as.numeric(ano_final_media) - 10
@@ -97,30 +102,40 @@ diagrama_controle = function (ano_analise, ano_final_media, cidade_estudo,  data
   estado <- unique(mortality_grupo_year$uf)
   
   library(ggplot2)
-
+  
+  # Reordenar as categorias
+  reordered_categories <- factor(mortality_grupo_year_merge$death_per_1000, levels = c("Observed", "Expected Average", "Upper Limit", "Lower Limit"))
+  
+  # Criar o gráfico
   p <- ggplot(mortality_grupo_year_merge, aes(x = month, group = 1)) + 
-    geom_line(aes(y = avg_month, color = "Average", linetype = "Average")) +
+    geom_line(aes(y = death_per_1000, color = "Observed", linetype = "Observed")) +
+    geom_line(aes(y = avg_month, color = "Expected Average", linetype = "Expected Average")) +
     geom_line(aes(y = lim_superior, color = "Upper Limit", linetype = "Upper Limit")) +
     geom_line(aes(y = lim_inferior, color = "Lower Limit", linetype = "Lower Limit")) +
-    geom_line(aes(y = death_per_1000, color = "Study Year", linetype = "Study Year")) +
-    ggtitle(paste("Locality: ", cidade_estudo, "-", estado)) +
-    theme_bw()+
-    labs(x = "Month", y = "Infant Mortality Rate", color = "Legend Title") +
     scale_color_manual(
-      values = c("Average" = "darkred", "Upper Limit" = "darkred", "Lower Limit" = "darkred", "Study Year" = "black"),
-      name = "Legend Title"
+      values = c("Observed" = "black", "Expected Average" = "darkred", "Upper Limit" = "darkred", "Lower Limit" = "darkred"),
+      breaks = c("Observed", "Expected Average", "Upper Limit", "Lower Limit"),
+      name = ""
     ) +
     scale_linetype_manual(
-      values = c("Average" = "solid", "Upper Limit" = "dashed", "Lower Limit" = "dashed", "Study Year" = "solid"),
-      name = "Legend Title"
-    ) 
-     
+      values = c("Observed" = "solid", "Expected Average" = "solid", "Upper Limit" = "dashed", "Lower Limit" = "dashed"),
+      breaks = c("Observed", "Expected Average", "Upper Limit", "Lower Limit"),
+      name = ""
+    ) +
+    #scale_fill_discrete(breaks=c("Observed", "Expected Average", "Upper Limit", "Lower Limit")) + 
+    
+    labs(x = "Month", y = "Infant Mortality Rate") +
+    ggtitle(paste(letra, "- Locality: ", cidade_estudo, "-", estado)) +
+    theme_bw() +
+    theme(
+      legend.position = "bottom",
+      legend.justification = "center"
+    )
   
   # Exibir o gráfico
   print(p)
-
-   
-
+  
+  
 
 }
 
