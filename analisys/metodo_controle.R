@@ -10,13 +10,13 @@ micro_data_csv_clean$year_month_date <- as.Date(micro_data_csv_clean$year_month_
 
 micro_data_csv_clean <- filter(micro_data_csv_clean, LOCAL_NAME != "")
 
-uf_list<- read.csv(file = './data/cidades_uf.csv')
-uf_list$sub_code = substr(uf_list$code,0,6)
+uf_list<- read.csv(file = './data/cidades_uf_population.csv')
+uf_list$sub_code = substr(uf_list$cod_municipio,0,6)
 
 # FALTA TRATAR ALGUMAS CIDADES 
 micro_data_csv_clean <- merge(x=micro_data_csv_clean, y=uf_list, 
                               by.x=c("LOCAL_NAME", "LOCAL_CODE"), 
-                              by.y=c("name", "sub_code"))
+                              by.y=c("nome_municipio", "sub_code"))
 
 micro_data_csv_clean$region <- ifelse(micro_data_csv_clean$uf %in%  list('RJ',"SP","MG","ES" ), "Sudeste", ifelse(micro_data_csv_clean$uf %in%  list('RS',"SC","PR"),"Sul",ifelse(micro_data_csv_clean$uf %in%  list('MS',"MT","GO", "DF"),"CentroOeste", ifelse(micro_data_csv_clean$uf %in%  list('AM',"AC","RR","RO","AP","TO", "PA" ),"Norte","Nordeste")))) 
 
@@ -31,9 +31,6 @@ cidade_estudo_lista <- c('São Paulo', 'Capão do Cipó', 'Campo Mourão', 'Abad
 
 #cidade_estudo_lista <- c('Serranópolis', 'Montes Claros de Goiás', 'Trombas', 'Fagundes Varela', 'Diamante do Sul', 'Vila Boa')
 
-#cidade_estudo_lista <- c('Afrânio', "Abelardo luz" ) 
-
-#cidade_estudo_lista <- unique(micro_data_csv_clean$LOCAL_NAME) 
 
 #for (cidade_estudo in cidade_estudo_lista) {
 #  diagrama_controle(ano_analise, ano_final_media, cidade_estudo, micro_data_csv_clean)
@@ -48,21 +45,51 @@ library(patchwork)
 library(ggplot2)
 library(gridExtra)
 
-
-install.packages("cowplot")
-library(cowplot)
+### plot grafico 1 
+#install.packages("cowplot")
+#library(cowplot)
 p1 <- diagrama_controle(ano_analise, ano_final_media, 'Rio de Janeiro', micro_data_csv_clean, "A")
 p2 <- diagrama_controle(ano_analise, ano_final_media, 'Campo Mourão', micro_data_csv_clean, "B")
 p3 <- diagrama_controle(ano_analise, ano_final_media, 'Diamante do Sul', micro_data_csv_clean, "C")
 p4 <- diagrama_controle(ano_analise, ano_final_media, 'Gonçalves Dias', micro_data_csv_clean, "D")
 
-
-subplot <- p1 + p2 + p3 + p4 +
-  plot_layout(guides = 'collect') & theme(legend.position = 'bottom')
-
+subplot <- p1 + p2 + p3 + p4 + plot_layout(guides = 'collect') & theme(legend.position = 'bottom')
 print(subplot)
 
-historico_cidades('Aratuba', 2000, micro_data_csv_clean)
+### plot grafico 2
+
+p5 <- historico_cidades('Rio de Janeiro', 2009, 2020, micro_data_csv_clean, "A")
+p6 <- historico_cidades('Campo Mourão', 2009, 2020, micro_data_csv_clean, "B")
+p7 <- historico_cidades('Diamante do Sul', 2009, 2020, micro_data_csv_clean, "C")
+p8 <- historico_cidades('Gonçalves Dias', 2009, 2020, micro_data_csv_clean, "D")
+
+subplot2 <- p5 + p6 + p7 + p8 + plot_layout(guides = 'collect')
+print(subplot2)
+
+# created table 1 
+
+cidade_estudo_lista <- c('Rio de Janeiro', 'Campo Mourão', 'Diamante do Sul', 'Gonçalves Dias')
+
+micro_data_csv_clean$year <- format(as.Date(micro_data_csv_clean$year_month_date, format="%d/%m/%Y"),"%Y")
+tabela_data <- filter(micro_data_csv_clean, year == '2020' )
+
+tabela_data_agg <- tabela_data %>% group_by(LOCAL_NAME) %>% summarise(
+  all_death = sum(all_death),
+  FL_BIRTH = sum(FL_BIRTH),
+  LOCAL_NAME = max(LOCAL_NAME) 
+)
+
+tabela_data_agg_filter <- filter(tabela_data_agg, LOCAL_NAME %in% cidade_estudo_lista)
+
+tabela_data_agg_filter$death_per_1000<- tabela_data_agg_filter$all_death/tabela_data_agg_filter$FL_BIRTH*1000
+
+
+
+# created table 2 
+micro_data_csv_clean$year <- format(as.Date(micro_data_csv_clean$year_month_date, format="%d/%m/%Y"),"%Y")
+tabela_data <- filter(micro_data_csv_clean, year == '2020' )
+tabela_data <- 
+
 
 # Definicao da funcao
 
@@ -122,8 +149,6 @@ diagrama_controle = function (ano_analise, ano_final_media, cidade_estudo,  data
       breaks = c("Observed", "Expected Average", "Upper Limit", "Lower Limit"),
       name = ""
     ) +
-    #scale_fill_discrete(breaks=c("Observed", "Expected Average", "Upper Limit", "Lower Limit")) + 
-    
     labs(x = "Month", y = "Infant Mortality Rate") +
     ggtitle(paste(letra, "- Locality: ", cidade_estudo, "-", estado)) +
     theme_bw() +
@@ -139,76 +164,39 @@ diagrama_controle = function (ano_analise, ano_final_media, cidade_estudo,  data
 
 }
 
-historico_cidades = function (cidade_estudo, ano_inicio,   data ) {
-  data$year <- format(as.Date(data$year_month_date, format="%d/%m/%Y"),"%Y")
-  cidade_analise <- filter(data, LOCAL_NAME == cidade_estudo)
-  cidade_analise <- filter(cidade_analise, year >= ano_inicio )
+historico_cidades = function (cidade_estudo, ano_inicio, ano_fim, data, letra ) {
   
+  data$month <- format(as.Date(data$year_month_date, format="%d/%m/%Y"),"%m")
+  data$year <- format(as.Date(data$year_month_date, format="%d/%m/%Y"),"%Y")
+  
+  mortality_grupo <- filter(data, year >= ano_inicio )
+  mortality_grupo <- filter(mortality_grupo, year <= ano_fim )
+  
+  cidade_analise <- filter(mortality_grupo, LOCAL_NAME == cidade_estudo)
+
   cidade_analise_group <- cidade_analise %>% group_by(year) %>% summarise(
     year = max(year),
     soma_mortes = sum(all_death), 
     soma_nasc = sum(FL_BIRTH)
   )
-  cidade_analise_group$relacao <- cidade_analise_group$soma_mortes / cidade_analise_group$soma_nasc
+  
+  cidade_analise_group$death_per_1000 <- cidade_analise_group$soma_mortes / cidade_analise_group$soma_nasc *1000
+  
+  estado <- unique(cidade_analise$uf)
   
   library(ggplot2)
   
+  years_to_show <- c('2010','2012','2014','2016', '2018','2020')
+  
   p <- (ggplot(cidade_analise_group, aes(x=year, group = 1) ) + 
-          geom_line(aes(y = relacao), color = "darkred") 
-        # + geom_line(aes(y = lim_inferior), color = "darkred", linetype = "dashed") 
-        #  + geom_line(aes(y = death_per_1000), color = "black") 
-        +  ggtitle( paste("Relação Histórica - ", " Cidade:", cidade_estudo  ))
-        +    labs(x = "Anos",
-                  y = "Incidência de mortalidade por nascidos vivos por 1000 habitantes")+ theme_bw()
+        geom_line(aes(y = death_per_1000), color = "darkred") +
+        ggtitle(paste(letra, "- Locality: ", cidade_estudo, "-", estado)) +
+        labs(x = "Year", y = "Infant Mortality Rate" ) + theme_bw() +
+          scale_x_discrete(breaks = years_to_show)
+        
   )
   print(p)
   
-  
-  
 }
-
-
-## escolha das cidade 
-
-micro_data_csv_clean$year <- format(as.Date(micro_data_csv_clean$year_month_date, format="%d/%m/%Y"),"%Y")
-
-cidade_analise <- filter(micro_data_csv_clean, LOCAL_NAME == 'Gonçalvel Dias' )
-cidade_analise <- filter(micro_data_csv_clean, year == 2020 )
-
-
-cidade_analise_group <- cidade_analise %>% group_by(LOCAL_CODE) %>% summarise(
-  LOCAL_CODE = max(LOCAL_CODE),
-  LOCAL_NAME = max(LOCAL_NAME),
-  grupo = max(grupo),
-  soma_mortes = sum(all_death), 
-  soma_nasc = sum(FL_BIRTH)
-  
-  )
-
-cidade_analise_group$relacao <- cidade_analise_group$soma_mortes / cidade_analise_group$soma_nasc
-
-cidade_analise_group_filter <- filter(cidade_analise_group, soma_mortes == 0 )
-
-
-
-
-
-
-
-
-cidade_analise_group$relacao <- cidade_analise_group$soma_mortes / cidade_analise_group$soma_nasc
-
-
-library(ggplot2)
-
-p <- (ggplot(cidade_analise_group, aes(x=year, group = 1) ) + 
-        geom_line(aes(y = relacao), color = "darkred") 
-     # + geom_line(aes(y = lim_inferior), color = "darkred", linetype = "dashed") 
-     #  + geom_line(aes(y = death_per_1000), color = "black") 
-      +  ggtitle( paste("Diagrama de Controle - Ano de estudo:", ano_analise, " Range:", ano_final_media,"-", ano_inicial_media, " Cidade:", cidade_estudo  ))
-      +    labs(x = "Meses",
-                y = "Incidência de mortalidade por 1000 habitantes")+ theme_bw()
-)
-print(p)
 
 dev.off()
