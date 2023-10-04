@@ -23,7 +23,7 @@ micro_data_csv_clean <- merge(x=micro_data_csv_clean, y=uf_list_clean,
 
 micro_data_csv_clean$region <- ifelse(micro_data_csv_clean$UF %in%  list('RJ',"SP","MG","ES" ), "Sudeste", ifelse(micro_data_csv_clean$UF %in%  list('RS',"SC","PR"),"Sul",ifelse(micro_data_csv_clean$UF %in%  list('MS',"MT","GO", "DF"),"CentroOeste", ifelse(micro_data_csv_clean$UF %in%  list('AM',"AC","RR","RO","AP","TO", "PA" ),"Norte","Nordeste")))) 
 
-#write.csv(micro_data_csv_clean, "mortality_and_nasc_by_month_v4.csv", row.names=TRUE)
+write.csv(micro_data_csv_clean, "./data/mortality_and_nasc_by_month_v6.csv", row.names=TRUE)
 #unique(micro_data_csv_clean$LOCAL_NAME)
 
 
